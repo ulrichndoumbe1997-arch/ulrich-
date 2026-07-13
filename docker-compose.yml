@@ -1,0 +1,117 @@
+version: "3.9"
+
+services:
+
+  # ─── Base de données PostgreSQL ───────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: ulrich_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ulrich
+      POSTGRES_USER: ulrich
+      POSTGRES_PASSWORD: ulrich_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ulrich"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (file de messages pour les alertes) ────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ulrich_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend FastAPI ──────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ulrich_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ulrich:ulrich_secret@db:5432/ulrich
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change_me_in_production_please
+      SCAN_INTERVAL_SECONDS: 60
+      PING_TIMEOUT: 1
+      PING_COUNT: 2
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    cap_add:
+      - NET_ADMIN      # nécessaire pour les scans réseau (ping/nmap)
+      - NET_RAW
+
+  # ─── Worker Celery (alertes asynchrones) ─────────────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ulrich_worker
+    restart: unless-stopped
+    command: celery -A app.core.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ulrich:ulrich_secret@db:5432/ulrich
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change_me_in_production_please
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  # ─── Frontend React ───────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ulrich_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+      REACT_APP_WS_URL: ws://localhost:8000
+    depends_on:
+      - backend
+
+  # ─── Nginx (reverse proxy) ────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: ulrich_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:

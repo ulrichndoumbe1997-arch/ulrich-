@@ -1,0 +1,35 @@
+# ── API ──────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# ── Base de données ───────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.30
+asyncpg==0.29.0
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# ── Authentification ──────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ── Découverte réseau ─────────────────────────────────────────
+python-nmap==0.7.1
+pysnmp==6.1.3
+scapy==2.5.0
+icmplib==3.0.3
+
+# ── Tâches asynchrones (alertes) ─────────────────────────────
+celery==5.3.6
+redis==5.0.4
+
+# ── Notifications ─────────────────────────────────────────────
+httpx==0.27.0
+aiosmtplib==3.0.1
+jinja2==3.1.4
+
+# ── Utilitaires ───────────────────────────────────────────────
+pydantic==2.7.1
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+loguru==0.7.2
