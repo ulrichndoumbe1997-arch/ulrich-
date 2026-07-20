@@ -1,92 +1,143 @@
-# ULRICH — Network Supervision Tool
+# ⬡ ULRICH — Network Supervision Tool
 
-Outil de supervision réseau complet — 100% open source, déployable avec Docker.
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Docker](https://img.shields.io/badge/docker-ready-green)
+![Python](https://img.shields.io/badge/python-3.11-yellow)
+![React](https://img.shields.io/badge/react-18-cyan)
 
-## Prérequis
+> **ULRICH** est un outil de supervision réseau complet développé dans le cadre du projet **KARA**. Il permet de découvrir, surveiller et alerter sur l'état des équipements d'un réseau informatique en temps réel.
 
-- Docker Desktop (https://www.docker.com/products/docker-desktop/)
-- VS Code (https://code.visualstudio.com/)
+---
 
-## Démarrage rapide
+## 📋 Fonctionnalités
 
-```bash
-# 1. Cloner / copier le projet dans un dossier
-cd ulrich/
+| Fonctionnalité | Description |
+|---|---|
+| 🔍 **Découverte automatique** | Scan du réseau et détection de tous les équipements connectés |
+| 🗺️ **Carte topologique** | Visualisation graphique et interactive du réseau |
+| 📊 **Tableau de bord** | Statistiques en temps réel par type et par zone |
+| 🚨 **Alertes automatiques** | Détection des pannes et création d'incidents |
+| 🔌 **Surveillance des ports** | Vérification des services HTTP, HTTPS, SSH, DNS... |
+| 🏢 **Gestion des zones** | Organisation des équipements par zone géographique |
+| 🔐 **Authentification** | Accès sécurisé par login/mot de passe |
+| 📡 **Monitoring continu** | Ping automatique toutes les 60 secondes |
 
-# 2. Lancer tous les services
-docker compose up -d --build
+---
 
-# 3. Attendre ~30 secondes puis ouvrir
-#    http://localhost:8000/docs   ← API interactive
-#    http://localhost:3000        ← Interface (Phase 2)
-```
-
-## Structure du projet
+## 🏗️ Architecture
 
 ```
 ulrich/
-├── docker-compose.yml          ← Orchestration des services
-├── start.sh                    ← Script de démarrage
-├── backend/
-│   ├── Dockerfile
-│   ├── requirements.txt
+├── backend/          # API REST Python FastAPI
 │   └── app/
-│       ├── main.py             ← Point d'entrée FastAPI
-│       ├── core/
-│       │   └── config.py       ← Configuration centrale
-│       ├── db/
-│       │   └── database.py     ← Connexion PostgreSQL
-│       ├── models/
-│       │   ├── device.py       ← Modèles Device, Zone, Ping, SNMP
-│       │   └── user.py         ← Modèle utilisateur
-│       ├── schemas/
-│       │   └── schemas.py      ← Validation Pydantic
-│       ├── services/
-│       │   └── discovery/
-│       │       └── scanner.py  ← Scanner réseau (Ping + Nmap + SNMP)
-│       └── api/routes/
-│           ├── devices.py      ← CRUD équipements + historique
-│           └── network.py      ← Scanner, Zones, Dashboard
-├── scripts/
-│   └── init_db.sql             ← Initialisation base de données
-└── nginx/
-    └── nginx.conf              ← Reverse proxy
+│       ├── api/      # Endpoints REST
+│       ├── models/   # Modèles base de données
+│       ├── services/ # Scanner réseau, monitoring, alertes
+│       └── schemas/  # Validation des données
+├── frontend/         # Interface React
+├── nginx/            # Reverse proxy
+├── scripts/          # Initialisation base de données
+└── docker-compose.yml
 ```
 
-## Endpoints API principaux
+---
+
+## 🛠️ Stack technique
+
+| Composant | Technologie |
+|---|---|
+| **Backend** | Python 3.11 + FastAPI |
+| **Frontend** | React 18 |
+| **Base de données** | PostgreSQL 15 |
+| **Cache** | Redis 7 |
+| **Proxy** | Nginx |
+| **Découverte réseau** | Nmap + ICMP Ping |
+| **Conteneurisation** | Docker + Docker Compose |
+
+---
+
+## 🚀 Installation et démarrage
+
+### Prérequis
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installé
+- Windows 10/11, macOS ou Linux
+
+### Démarrage en 3 étapes
+
+```bash
+# 1. Cloner le projet
+git clone https://github.com/ulrichndoumbe1997-arch/ulrich-
+cd ulrich-
+
+# 2. Lancer tous les services
+docker compose up -d
+
+# 3. Ouvrir dans le navigateur
+# http://localhost:3000
+```
+
+### Identifiants par défaut
+- **Utilisateur** : `admin`
+- **Mot de passe** : `Admin1234!`
+
+---
+
+## 📱 Utilisation
+
+### 1. Scanner le réseau
+1. Connecte-toi sur `http://localhost:3000`
+2. Va dans **"Scanner"**
+3. Entre ta plage réseau (ex: `192.168.1.0/24`)
+4. Clique sur **"Lancer le scan"**
+
+### 2. Trouver ta plage réseau
+```bash
+# Windows
+ipconfig
+# Cherche "Adresse IPv4" sous Wi-Fi
+# Ex: 192.168.1.49 → plage = 192.168.1.0/24
+```
+
+### 3. Visualiser la carte
+- Clique sur **"Carte réseau"**
+- Clique sur un équipement pour voir ses détails et ports ouverts
+
+### 4. Gérer les alertes
+- Les incidents sont créés automatiquement quand un équipement tombe en panne
+- Va dans **"Alertes"** pour acquitter ou résoudre les incidents
+
+---
+
+## 🔒 Sécurité
+
+- Authentification par login/mot de passe
+- Sessions sécurisées avec token localStorage
+- API REST sécurisée
+
+---
+
+## 📊 Endpoints API principaux
 
 | Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| GET  | `/api/v1/devices/` | Liste tous les équipements |
-| POST | `/api/v1/devices/` | Ajouter manuellement |
+|---|---|---|
+| GET | `/api/v1/devices/` | Liste tous les équipements |
+| POST | `/api/v1/devices/` | Ajouter un équipement |
 | POST | `/api/v1/scan/` | Lancer un scan réseau |
-| GET  | `/api/v1/dashboard/stats` | Statistiques globales |
-| GET  | `/api/v1/zones/` | Liste les zones réseau |
-| POST | `/api/v1/devices/{id}/ping` | Ping manuel |
-| GET  | `/api/v1/devices/{id}/history` | Historique disponibilité |
+| GET | `/api/v1/dashboard/stats` | Statistiques globales |
+| GET | `/api/v1/zones/` | Liste les zones |
+| POST | `/api/v1/scan/ports/{ip}` | Scanner les ports d'un équipement |
 
-## Lancer un scan réseau
+Documentation API complète : `http://localhost:8000/docs`
 
-Depuis l'interface Swagger (`http://localhost:8000/docs`), appelle :
+---
 
-```json
-POST /api/v1/scan/
-{
-  "network": "192.168.1.0/24",
-  "snmp_community": "public"
-}
-```
+## 👤 Auteur
 
-## Phases du projet
+**Ulrich Ndoumbe**
+- GitHub: [@ulrichndoumbe1997-arch](https://github.com/ulrichndoumbe1997-arch)
 
-- [x] **Phase 1** — Fondations & Découverte réseau (EN COURS)
-- [ ] **Phase 2** — Visualisation graphique (carte topologique)
-- [ ] **Phase 3** — Tableau de bord & Statistiques
-- [ ] **Phase 4** — Alertes & Notifications
-- [ ] **Phase 5** — Déploiement & Finalisation
+---
 
-## Identifiants par défaut
+## 📄 Licence
 
-- **Utilisateur admin** : `admin`
-- **Mot de passe** : `Admin1234!`
-- **Base de données** : `postgresql://ulrich:ulrich_secret@localhost:5432/ulrich`
+Projet développé dans le cadre du projet **KARA** — Supervision réseau.
