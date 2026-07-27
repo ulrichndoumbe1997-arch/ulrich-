@@ -1,8 +1,6 @@
-version: "3.9"
-
 services:
 
-  # ─── Base de données PostgreSQL ───────────────────────────────────────────
+  # Base de données PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: ulrich_db
@@ -22,7 +20,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ─── Redis (file de messages pour les alertes) ────────────────────────────
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: ulrich_redis
@@ -35,7 +33,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ─── Backend FastAPI ──────────────────────────────────────────────────────
+  # Backend FastAPI
   backend:
     build:
       context: ./backend
@@ -59,33 +57,10 @@ services:
       redis:
         condition: service_healthy
     cap_add:
-      - NET_ADMIN      # nécessaire pour les scans réseau (ping/nmap)
-      - NET_RAW
-
-  # ─── Worker Celery (alertes asynchrones) ─────────────────────────────────
-  worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: ulrich_worker
-    restart: unless-stopped
-    command: celery -A app.core.celery_app worker --loglevel=info
-    environment:
-      DATABASE_URL: postgresql+asyncpg://ulrich:ulrich_secret@db:5432/ulrich
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: change_me_in_production_please
-    volumes:
-      - ./backend:/app
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    cap_add:
       - NET_ADMIN
       - NET_RAW
 
-  # ─── Frontend React ───────────────────────────────────────────────────────
+  # Frontend React
   frontend:
     build:
       context: ./frontend
@@ -100,7 +75,7 @@ services:
     depends_on:
       - backend
 
-  # ─── Nginx (reverse proxy) ────────────────────────────────────────────────
+  # Nginx
   nginx:
     image: nginx:alpine
     container_name: ulrich_nginx
